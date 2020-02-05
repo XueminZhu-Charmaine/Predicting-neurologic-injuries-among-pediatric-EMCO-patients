@@ -1,8 +1,7 @@
 # Data pre-processing for ECMO ELSO data set.
 # By Vy Tran
 # Goals: 
- ## Breakdown ELSO data by by neurological complications
- ## other types of complications
+ ## Breakdown ELSO data by neurological complications and other types of complications
  ## Demographic for entire ELSO data set (~500) 
 
 
@@ -28,7 +27,7 @@ nrow(ELSO_JHH_Data_included)
 ELSO_JHH_Data_included = dplyr::filter(ELSO_JHH_Data_included, AgeYears < 18.1) # Keep only patients less than 18 years old
 nrow(ELSO_JHH_Data_included)
 
-# Handle Date-time data column:
+# Handle date-time data column:
 library(lubridate) 
 class(ELSO_JHH_Data_included$TimeOff)
 head(ELSO_JHH_Data_included$TimeOff)
@@ -59,7 +58,7 @@ min(ELSO_JHH_Data_included_final$AgeDays)
 #Sexes:
 table(ELSO_JHH_Data_included_final$Sex)
 
-####Preprocess label data:
+####Preprocess complication data:
 ELSO_complication = read_excel("//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/ELSO_complication.xlsx")
 colnames(ELSO_complication)
 names(ELSO_complication)[names(ELSO_complication) == "PatientId"] = "PatientID"
