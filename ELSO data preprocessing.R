@@ -21,9 +21,12 @@ nrow(ELSO_JHH_Data_included)
 sum(is.na(ELSO_JHH_Data_included$RunNo))
 
 ## Keep patients with more than 6 hours on ECMO
+sum(is.na(ELSO_JHH_Data$HoursECMO))
 ELSO_JHH_Data_included = transform(ELSO_JHH_Data_included, HoursECMO = as.numeric(HoursECMO), AgeYears = as.numeric(AgeYears))
 ELSO_JHH_Data_included = dplyr::filter(ELSO_JHH_Data_included, HoursECMO > 6) 
 nrow(ELSO_JHH_Data_included)
+sum(is.na(ELSO_JHH_Data_included$HoursECMO))
+sum(is.na(ELSO_JHH_Data_included$TimeOff))
 
 ## Keep only patients less than 18 years old
 ELSO_JHH_Data_included = dplyr::filter(ELSO_JHH_Data_included, AgeYears < 18) 
@@ -106,5 +109,32 @@ write.xlsx(label_all_complications, "//win.ad.jhu.edu/data/accm-research$/bembea
 
 # Check how much out final ELSO list and Dr. Bembea's final list match:
 Bembea = read.csv(file = "//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/2020_01_24_ELSO_JHH_Linked_Data.csv")
-matched_patients = merge(Bembea, ELSO_JHH_Data_included_final, by = "PatientID")
+matched_patients = merge(Bembea, ELSO_JHH_Data_included_final_by_time_on, by = "PatientID")
 nrow(matched_patients)
+#########################
+
+# Filter by Time On:
+# Handle date-time data column:
+class(ELSO_JHH_Data_included$TimeOn)
+head(ELSO_JHH_Data_included$TimeOn)
+ELSO_JHH_Data_included = ELSO_JHH_Data_included %>% mutate(TimeOn = mdy_hms(TimeOn))
+ELSO_JHH_Data_included$TimeOn = as.POSIXct(ELSO_JHH_Data_included$TimeOn)
+
+#Keep only patients between June 1, 2011 – December 31, 2018:
+date1 = as.POSIXct("2011-06-01 00:00:00") #lower bound
+date2 = as.POSIXct("2018-12-31 23:59:00") #upper bound
+time_range = interval(date1, date2)   #desired range
+ELSO_JHH_Data_included_final_by_time_on = ELSO_JHH_Data_included[ELSO_JHH_Data_included$TimeOn %within% time_range,]
+nrow(ELSO_JHH_Data_included_final_by_time_on)
+
+# Export the data:
+write.xlsx(ELSO_JHH_Data_included_final, "//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/ELSO_JHH_Data_included_final_updated.xlsx")
+check_2_methods =  merge(ELSO_JHH_Data_included_final, ELSO_JHH_Data_included_final_by_time_on, by = "PatientID")
+difference = setdiff(ELSO_JHH_Data_included_final_by_time_on$PatientID, ELSO_JHH_Data_included_final$PatientID)
+difference
+
+mistmatchedPT = ELSO_JHH_Data_included_final_by_time_on %>%
+  filter(str_detect(PatientID, difference))
+mistmatchedPT$HoursECMO
+mistmatchedPT$TimeOff
+# This patient had time off in 2019
