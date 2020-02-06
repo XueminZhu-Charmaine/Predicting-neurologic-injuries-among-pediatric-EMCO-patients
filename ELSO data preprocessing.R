@@ -18,12 +18,7 @@ summary(ELSO_JHH_Data)
 ## Keep patients with 1 EMCO run
 ELSO_JHH_Data_included = dplyr::filter(ELSO_JHH_Data, RunNo < 2 ) 
 nrow(ELSO_JHH_Data_included)
-
-## Remove rows with NA in "HoursECMO"
-which( colnames(ELSO_JHH_Data_included)=="HoursECMO")
-ELSO_JHH_Data_included = ELSO_JHH_Data_included[complete.cases(ELSO_JHH_Data_included[ , 8]),] 
-sum(is.na(ELSO_JHH_Data_included$HoursECMO))
-nrow(ELSO_JHH_Data_included)
+sum(is.na(ELSO_JHH_Data_included$RunNo))
 
 ## Keep patients with more than 6 hours on ECMO
 ELSO_JHH_Data_included = transform(ELSO_JHH_Data_included, HoursECMO = as.numeric(HoursECMO), AgeYears = as.numeric(AgeYears))
@@ -48,23 +43,36 @@ ELSO_JHH_Data_included_final = ELSO_JHH_Data_included[ELSO_JHH_Data_included$Tim
 nrow(ELSO_JHH_Data_included_final)
 
 # Export the data:
-write.xlsx(ELSO_JHH_Data_included_final, "//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/ELSO_JHH_Data_included_final.xlsx")
+write.xlsx(ELSO_JHH_Data_included_final, "//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/ELSO_JHH_Data_included_final_updated.xlsx")
 
 
 #Demographic for included ELSO data set:
 
 ## Races:
 table(ELSO_JHH_Data_included_final$Races)
+sum(is.na(ELSO_JHH_Data_included_final$Races))
+
+### Calculate % of race:
+
+percent = function(x,y){
+  x*100/y
+}
+
+races = c(63, 46, 9, 8, 9, 2, 6)
+
+for (i in races){
+  z = percent(x = i, y = 143)
+  print (z)
+}
 
 ## Ages:
-hist(ELSO_JHH_Data_included_final$AgeYears)
 mean(ELSO_JHH_Data_included_final$AgeYears)
 sd(ELSO_JHH_Data_included_final$AgeYears)
-max(ELSO_JHH_Data_included_final$AgeYears)
-min(ELSO_JHH_Data_included_final$AgeYears)
+sum(is.na(ELSO_JHH_Data_included_final$AgeYears))
 
 #Sexes:
 table(ELSO_JHH_Data_included_final$Sex)
+sum(is.na((ELSO_JHH_Data_included_final$Sex)))
 
 ##########################################################
 
@@ -84,6 +92,19 @@ which(colnames(ELSO_with_complication)=="Code")
 Codes = ELSO_with_complication[, c(128,129)]
 label_all_complications =  unique(merge(Codes, label_all_complications, by = "Description"))
 view(label_all_complications)
+
+#Count and calculate the percentage of all complications:
+comp = c(87,25,53,4,1,72,10,8,5)
+
+for (i in comp){
+  z = percent(x = i, y = 143)
+  print (z)
+}
+
 #Export label space for all complications:
 write.xlsx(label_all_complications, "//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/Included_ELSO_all_complication_2011_to_2018.xlsx")
 
+# Check how much out final ELSO list and Dr. Bembea's final list match:
+Bembea = read.csv(file = "//win.ad.jhu.edu/data/accm-research$/bembeaarcpicu2/ECMOAnon/TeamShiba/DataProc/2020_01_24_ELSO_JHH_Linked_Data.csv")
+matched_patients = merge(Bembea, ELSO_JHH_Data_included_final, by = "PatientID")
+nrow(matched_patients)
